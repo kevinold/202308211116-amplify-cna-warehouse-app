@@ -12,11 +12,14 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  formatISO,
+  isSameMonth,
+  isToday,
   startOfMonth,
   startOfWeek,
   subMonths,
 } from "date-fns";
-import { flow, map, range } from "lodash/fp";
+import { equals, flow, map, range, tap } from "lodash/fp";
 import { Fragment, useReducer } from "react";
 
 const meetings = [
@@ -48,33 +51,52 @@ function classNames(...classes) {
 //     }))
 //   );
 
-const generateCalendar = (date: Date) => {
-  const formatDate = format(date, "yyyy-MM-dd");
-  const startDay = startOfWeek(startOfMonth(date), { weekStartsOn: 1 });
-  const endDay = endOfWeek(endOfMonth(date), { weekStartsOn: 1 });
-  console.log(startDay, endDay);
-  const totalDaysN = Math.ceil(
-    (endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  console.log(totalDaysN);
-  // calculate totalDays using date-fns
+const log = (msg) =>
+  tap((x) => {
+    console.log(msg, x);
+    return x;
+  });
+
+// const generateCalendarN = (activeDate: Date) =>
+//   pipe(
+//     range(0),
+//     log("range"),
+//     map((day: number) => addDays(activeDate, day)),
+//     map((date: Date) => ({
+//       date: format(date, "yyyy-MM-dd"),
+//       ...(isSameMonth(date, activeDate) && { isCurrentMonth: true }),
+//       ...(isToday(date) && { isToday: true }),
+//       ...(isEqual(getDate(new Date()), getDate(date)) && { isSelected: true }),
+//     }))
+//   )(35);
+// console.log(generateCalendarN(new Date()));
+
+const generateCalendar = (baseDate: Date) => {
+  const startDay = startOfWeek(startOfMonth(baseDate), { weekStartsOn: 1 });
+  const endDay = endOfWeek(endOfMonth(baseDate), { weekStartsOn: 1 });
   const totalDays = differenceInDays(endDay, startDay) + 1;
-  console.log(totalDays);
 
   return flow(
     range(0),
     map((day: number) => {
-      const currentDate = addDays(startDay, day);
-      const formatCurrentDate = format(currentDate, "yyyy-MM-dd");
-      const isCurrentMonth = currentDate.getMonth() === date.getMonth();
-      const isToday = formatCurrentDate === formatDate;
-      // select today by default
-      const isSelected = formatCurrentDate === formatDate;
+      const iterateDate = addDays(startDay, day);
+      console.log(
+        "iterateDate",
+        formatISO(iterateDate, { representation: "date" }),
+        "baseDate",
+        formatISO(baseDate, { representation: "date" })
+      );
+
       return {
-        date: formatCurrentDate,
-        ...(isCurrentMonth && { isCurrentMonth }),
-        ...(isToday && { isToday }),
-        ...(isSelected && { isSelected }),
+        date: formatISO(iterateDate, { representation: "date" }),
+        ...(isSameMonth(baseDate, iterateDate) && { isCurrentMonth: true }),
+        ...(isToday(iterateDate) && { isToday: true }),
+        ...(equals(
+          formatISO(iterateDate, { representation: "date" }),
+          formatISO(baseDate, { representation: "date" })
+        ) && {
+          isSelected: true,
+        }),
       };
     })
   )(totalDays);
