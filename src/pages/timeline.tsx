@@ -19,7 +19,7 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import { equals, flow, map, range, tap } from "lodash/fp";
+import { flow, map, range, tap } from "lodash/fp";
 import { Fragment, useReducer } from "react";
 
 const meetings = [
@@ -80,23 +80,24 @@ const generateCalendar = (baseDate: Date) => {
     range(0),
     map((day: number) => {
       const iterateDate = addDays(startDay, day);
-      console.log(
-        "iterateDate",
-        formatISO(iterateDate, { representation: "date" }),
-        "baseDate",
-        formatISO(baseDate, { representation: "date" })
-      );
+      // console.log(
+      //   "iterateDate",
+      //   formatISO(iterateDate, { representation: "date" }),
+      //   "baseDate",
+      //   formatISO(baseDate, { representation: "date" })
+      // );
+      console.log("isToday", iterateDate, isToday(iterateDate));
 
       return {
         date: formatISO(iterateDate, { representation: "date" }),
         ...(isSameMonth(baseDate, iterateDate) && { isCurrentMonth: true }),
         ...(isToday(iterateDate) && { isToday: true }),
-        ...(equals(
-          formatISO(iterateDate, { representation: "date" }),
-          formatISO(baseDate, { representation: "date" })
-        ) && {
-          isSelected: true,
-        }),
+        // ...(equals(
+        //   formatISO(iterateDate, { representation: "date" }),
+        //   formatISO(baseDate, { representation: "date" })
+        // ) && {
+        //   isSelected: true,
+        // }),
       };
     })
   )(totalDays);
@@ -150,6 +151,10 @@ const reducer = (state, action) => {
 export default function Example() {
   //const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [state, dispatch] = useReducer(reducer, initialState);
+
+  // useEffect(() => {
+  //   console.log(state);
+  // }, [state]);
 
   function handleLastMonth() {
     dispatch({ type: "LAST_MONTH" });
